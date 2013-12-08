@@ -139,10 +139,10 @@ class Flymaster(FlightRecorderBase):
             while True:
                 if len(self.buffer) >= 2:
                     id = struct.unpack('<H', self.buffer[:2])[0]
-                    if id == 0xa3a3:
-                        logger.info('readpacket %r' % self.buffer[:2])
-                        self.buffer = self.buffer[2:]
-                        return Packet(id, None)
+                    #if id == 0xa3a3:
+                    #    logger.info('readpacket %r' % self.buffer[:2])
+                    #    self.buffer = self.buffer[2:]
+                    #    return Packet(id, None)
                     if len(self.buffer) >= 4:
                         length = ord(self.buffer[2])
                         if len(self.buffer) >= 4 + length:
@@ -257,7 +257,7 @@ class Flymaster(FlightRecorderBase):
                 datetime=dt,
                 duration=datetime.timedelta(hours=hours, minutes=minutes, seconds=seconds),
                 _igc_lambda=igc_lambda(self, dt)))
-            if index + 1 == count:
+            if index == count:
                 break
         return add_igc_filenames(tracks, 'XFR', self.serial_number)
 
