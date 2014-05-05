@@ -267,19 +267,26 @@ class Flymaster(FlightRecorderBase):
         return add_igc_filenames(tracks, 'XFR', self.serial_number)
 
     def ipfmdnl(self, dt, timeout=1):
-        self.write(('PFMDNL,%s,' % dt.strftime('%y%m%d%H%M%S')).encode('nmea_sentence'))
-        while True:
-            packet = self.readpacket(timeout)
-            if packet.id == 0xa0a0:
-                yield FlightInformationRecord(packet.data)
-            elif packet.id == 0xa1a1:
-                yield KeyTrackPositionRecord(packet.data)
-            elif packet.id == 0xa2a2:
-                yield TrackPositionRecordDeltas(packet.data)
-            elif packet.id == 0xa3a3:
-                break
-            else:
-                logger.info('unknown packet type %04X' % packet.id)
+        retrys = 0
+        got_data = False
+        while retrys < 5 and not got_data:
+            self.write(('PFMDNL,%s,' % dt.strftime('%y%m%d%H%M%S')).encode('nmea_sentence'))
+            while True:
+                packet = self.readpacket(timeout)
+                if packet.id == 0xa0a0:
+                    got_data = True
+                    yield FlightInformationRecord(packet.data)
+                elif packet.id == 0xa1a1:
+                    yield KeyTrackPositionRecord(packet.data)
+                elif packet.id == 0xa2a2:
+                    yield TrackPositionRecordDeltas(packet.data)
+                elif packet.id == 0xa3a3:
+                    if not got_data:
+                        retrys += 1
+                        logger.info('download failed, retrying')
+                    break
+                else:
+                    logger.info('unknown packet type %04X' % packet.id)
 
     def ipfmwpl(self):
         try:
